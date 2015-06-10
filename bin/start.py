@@ -32,6 +32,21 @@ if 'Ubuntu' == linux_dist:
         print('=================')
         os.system('sudo apt-get update')
         os.system('sudo apt-get install %s' % ' '.join(missing_packages))
+    if not os.path.exists('/etc/init/zookeeper.override'):
+        subprocess.check_call('echo manual | sudo tee /etc/init/zookeeper.override', shell=True)
+        subprocess.check_call('sudo service zookeeper stop', shell=True)
+    if not os.path.exists('/etc/init/mesos-master.override'):
+        subprocess.check_call('echo manual | sudo tee /etc/init/mesos-master.override', shell=True)
+        try:
+            subprocess.check_call('sudo service mesos-master stop', shell=True)
+        except:
+            pass
+    if not os.path.exists('/etc/init/mesos-slave.override'):
+        subprocess.check_call('echo manual | sudo tee /etc/init/mesos-slave.override', shell=True)
+        try:
+            subprocess.check_call('sudo service mesos-slave stop', shell=True)
+        except:
+            pass
 else:
     raise Exception('not supported platform: %s' % linux_dist)
 
