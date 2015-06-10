@@ -21,14 +21,15 @@ except:
     sys.exit()
 
 # create common dirs
-for sub_dir in ['cfg', 'run', 'log']:
+for sub_dir in ['cfg', 'run', 'log', 'data']:
     if not os.path.exists('%s/var/%s' % (BASE_DIR, sub_dir)):
         os.makedirs('%s/var/%s' % (BASE_DIR, sub_dir))
 
 # create network
 ifconfig_output = subprocess.check_output('ifconfig')
-if '172.17.100.1' not in ifconfig_output:
-    subprocess.check_call('sudo ifconfig lo:zk1 172.17.100.1', shell=True)
+for zk_no in [1, 2, 3]:
+    if '172.17.100.%s' % zk_no not in ifconfig_output:
+        subprocess.check_call('sudo ifconfig lo:zk%s 172.17.100.%s' % (zk_no, zk_no), shell=True)
 
 # supervisor
 if not os.path.exists('%s/var/log/supervisor' % BASE_DIR):
@@ -39,20 +40,26 @@ with open('%s/var/cfg/supervisor.cfg' % BASE_DIR, 'w') as f:
     f.write(supervisor_cfg)
 
 # zookeeper
-if not os.path.exists('%s/var/cfg/zk1' % BASE_DIR):
-    os.makedirs('%s/var/cfg/zk1' % BASE_DIR)
-if not os.path.exists('%s/var/log/zk1' % BASE_DIR):
-    os.makedirs('%s/var/log/zk1' % BASE_DIR)
-with open('%s/etc/zk.cfg' % BASE_DIR) as f:
-    zk_cfg = f.read().replace('${BASE_DIR}', BASE_DIR)
-    zk_cfg = zk_cfg.replace('${clientPortAddress}', '172.17.100.1')
-with open('%s/var/cfg/zk1/zk.cfg' % BASE_DIR, 'w') as f:
-    f.write(zk_cfg)
-with open('%s/etc/zookeeper-env.sh' % BASE_DIR) as f:
-    zookeeper_env_sh = f.read().replace('${BASE_DIR}', BASE_DIR)
-    zookeeper_env_sh = zookeeper_env_sh.replace('${zk_no}', '1')
-with open('%s/var/cfg/zk1/zookeeper-env.sh' % BASE_DIR, 'w') as f:
-    f.write(zookeeper_env_sh)
+for zk_no in [1, 2, 3]:
+    if not os.path.exists('%s/var/cfg/zk%s' % (BASE_DIR, zk_no)):
+        os.makedirs('%s/var/cfg/zk%s' % (BASE_DIR, zk_no))
+    if not os.path.exists('%s/var/log/zk%s' % (BASE_DIR, zk_no)):
+        os.makedirs('%s/var/log/zk%s' % (BASE_DIR, zk_no))
+    if not os.path.exists('%s/var/data/zk%s' % (BASE_DIR, zk_no)):
+        os.makedirs('%s/var/data/zk%s' % (BASE_DIR, zk_no))
+    with open('%s/var/data/zk%s/myid' % (BASE_DIR, zk_no), 'w') as f:
+        f.write(str(zk_no))
+    with open('%s/etc/zk.cfg' % BASE_DIR) as f:
+        zk_cfg = f.read().replace('${BASE_DIR}', BASE_DIR)
+        zk_cfg = zk_cfg.replace('${clientPortAddress}', '172.17.100.%s' % zk_no)
+        zk_cfg = zk_cfg.replace('${dataDir}', '%s/var/data/zk%s' % (BASE_DIR, zk_no))
+    with open('%s/var/cfg/zk%s/zk.cfg' % (BASE_DIR, zk_no), 'w') as f:
+        f.write(zk_cfg)
+    with open('%s/etc/zookeeper-env.sh' % BASE_DIR) as f:
+        zookeeper_env_sh = f.read().replace('${BASE_DIR}', BASE_DIR)
+        zookeeper_env_sh = zookeeper_env_sh.replace('${zk_no}', str(zk_no))
+    with open('%s/var/cfg/zk%s/zookeeper-env.sh' % (BASE_DIR, zk_no), 'w') as f:
+        f.write(zookeeper_env_sh)
 
 os.environ['JAVA_HOME'] = '%s/comp/jdk' % BASE_DIR
 subprocess.check_call('supervisord -c %s/var/cfg/supervisor.cfg' % BASE_DIR, shell=True)
