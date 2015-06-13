@@ -18,6 +18,10 @@ if not os.path.exists('%s/comp/consul' % BASE_DIR):
     print('missing consul: https://dl.bintray.com/mitchellh/consul/0.5.2_linux_amd64.zip')
     sys.exit()
 
+if not os.path.exists('%s/comp/consul-webui' % BASE_DIR):
+    print('missing consul webui: https://dl.bintray.com/mitchellh/consul/0.5.2_web_ui.zip')
+    sys.exit()
+
 if not os.path.exists('%s/comp/marathon/bin/start' % BASE_DIR):
     print('missing marathon: http://downloads.mesosphere.com/marathon/v0.8.2/marathon-0.8.2.tgz')
     sys.exit()
@@ -48,6 +52,9 @@ for slave_no in [1, 2, 3, 4, 5]:
 for marathon_no in [1, 2, 3]:
     if '172.17.100.%s' % (11 + marathon_no) not in ifconfig_output:
         subprocess.check_call('sudo ifconfig lo:marathon%s 172.17.100.%s' % (marathon_no, 11 + marathon_no), shell=True)
+for consul_no in [1, 2, 3]:
+    if '172.17.100.%s' % (14 + consul_no) not in ifconfig_output:
+        subprocess.check_call('sudo ifconfig lo:consul%s 172.17.100.%s' % (consul_no, 14 + consul_no), shell=True)
 
 # supervisor
 if not os.path.exists('%s/var/log/supervisor' % BASE_DIR):
@@ -124,6 +131,14 @@ if 'Ubuntu' == linux_dist:
             pass
 else:
     raise Exception('not supported platform: %s' % linux_dist)
+
+# consul
+for consul_no in [1, 2, 3]:
+    if not os.path.exists('%s/var/data/consul-server%s' % (BASE_DIR, consul_no)):
+        os.makedirs('%s/var/data/consul-server%s' % (BASE_DIR, consul_no))
+for slave_no in [1, 2, 3, 4, 5]:
+    if not os.path.exists('%s/var/data/consul-agent%s' % (BASE_DIR, slave_no)):
+        os.makedirs('%s/var/data/consul-agent%s' % (BASE_DIR, slave_no))
 
 # start the cluster
 os.environ['JAVA_HOME'] = '%s/comp/jdk' % BASE_DIR
