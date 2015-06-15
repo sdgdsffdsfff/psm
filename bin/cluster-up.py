@@ -99,8 +99,8 @@ if 'Ubuntu' == linux_dist:
         subprocess.check_call(
             'sudo apt-key adv --keyserver-options http-proxy=http://10.223.41.11:8444 --keyserver keyserver.ubuntu.com --recv E56151BF',
             shell=True, env=os.environ)
-    DISTRO = subprocess.check_output("lsb_release -is | tr '[:upper:]' '[:lower:]'", shell=True).strip()
-    CODENAME = subprocess.check_output('lsb_release -cs', shell=True).strip()
+    DISTRO = 'ubuntu'
+    CODENAME = 'trusty'
     subprocess.check_output(
         'echo "deb http://repos.mesosphere.io/%s %s main" | sudo tee /etc/apt/sources.list.d/mesosphere.list' % (
         DISTRO, CODENAME), shell=True)
